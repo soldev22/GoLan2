@@ -1,4 +1,8 @@
 @media (max-width: 768px) {
+  .nav-shell {
+    gap: 0.75rem;
+  }
+
   .nav-toggle {
     display: inline-block;
   }
@@ -20,7 +24,38 @@
     gap: 0.2rem;
   }
 
+  .search-form,
+  .weather-stats,
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-summary {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .search-form button {
+    width: 100%;
+  }
+
   .hero h1 {
     font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-main {
+    padding-top: 1.5rem;
+  }
+
+  .content-card {
+    padding: 1rem;
+  }
+
+  .nav-list {
+    right: 1rem;
+    left: 1rem;
+    min-width: 0;
   }
 }

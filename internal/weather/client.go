@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"weather-app/internal/models"
 )
@@ -61,7 +62,7 @@ func (c *Client) Current(ctx context.Context, city string) (models.Weather, erro
 	}
 
 	return models.Weather{
-		City:         strings.Title(city),
+		City:         titleizeCity(city),
 		TemperatureC: int(payload.Current.Temperature2M),
 		Condition:    weatherCodeToCondition(payload.Current.WeatherCode),
 		FeelsLikeC:   int(payload.Current.ApparentTemperature),
@@ -108,7 +109,7 @@ func (c *Client) Forecast(ctx context.Context, city string) ([]models.ForecastIt
 	items := make([]models.ForecastItem, 0, len(payload.Daily.Time))
 	for i := range payload.Daily.Time {
 		items = append(items, models.ForecastItem{
-			Day:       payload.Daily.Time[i],
+			Day:       formatForecastDay(payload.Daily.Time[i]),
 			HighC:     int(payload.Daily.MaxTemp[i]),
 			LowC:      int(payload.Daily.MinTemp[i]),
 			Condition: weatherCodeToCondition(payload.Daily.WeatherCode[i]),
@@ -215,4 +216,23 @@ func weatherCodeToCondition(code int) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func titleizeCity(city string) string {
+	parts := strings.Fields(strings.TrimSpace(city))
+	for i, part := range parts {
+		if len(part) == 0 {
+			continue
+		}
+		parts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+	}
+	return strings.Join(parts, " ")
+}
+
+func formatForecastDay(day string) string {
+	parsed, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return day
+	}
+	return parsed.Format("Mon, Jan 2")
 }

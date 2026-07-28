@@ -1,11 +1,22 @@
 {{define "index_content"}}
-<section class="content-card" aria-label="home content">
-  <h2>Search weather</h2>
-  <p>Enter a city to look up live weather details and a short forecast.</p>
-  <form action="/weather" method="get" class="search-form">
+<section class="content-card landing-card" aria-label="home content">
+  <div class="landing-copy">
+    <p class="eyebrow">Live weather preview</p>
+    <h2>Search a city and get weather that feels immediate.</h2>
+    <p>Look up current conditions and a short forecast in one pass. The results page keeps your city visible so you can try another location quickly.</p>
+  </div>
+
+  <form action="/weather" method="get" class="search-form search-form--large">
     <label for="city" class="sr-only">City</label>
-    <input id="city" name="city" type="text" placeholder="Try London" required>
-    <button type="submit">Search</button>
+    <input id="city" name="city" type="text" placeholder="Try London, Edinburgh, or Tokyo" autocomplete="off" required>
+    <button type="submit">Search weather</button>
   </form>
+
+  <div class="quick-cities" aria-label="Popular city shortcuts">
+    <a class="chip" href="/weather?city=London">London</a>
+    <a class="chip" href="/weather?city=Edinburgh">Edinburgh</a>
+    <a class="chip" href="/weather?city=Tokyo">Tokyo</a>
+    <a class="chip" href="/weather?city=Seattle">Seattle</a>
+  </div>
 </section>
 {{end}}

@@ -1,20 +1,70 @@
 {{define "weather_content"}}
-<section class="content-card" aria-label="weather content">
-  <h2>{{.Title}}</h2>
-  {{if .HasWeather}}
-    <div class="weather-summary">
-      <h3>{{.Weather.City}}</h3>
-      <p>{{.Weather.TemperatureC}}°C · {{.Weather.Condition}}</p>
-      <p>Feels like {{.Weather.FeelsLikeC}}°C · Humidity {{.Weather.HumidityPct}}% · Wind {{.Weather.WindKph}} km/h</p>
+<section class="weather-panel" aria-label="weather content">
+  <div class="content-card weather-search-card">
+    <div>
+      <p class="eyebrow">Refine search</p>
+      <h2>{{.Title}}</h2>
+      <p>{{.Message}}</p>
     </div>
-    <h3>Forecast</h3>
-    <ul>
-      {{range .Forecast}}
-      <li><strong>{{.Day}}</strong>: {{.HighC}}°C / {{.LowC}}°C · {{.Condition}}</li>
-      {{end}}
-    </ul>
+
+    <form action="/weather" method="get" class="search-form search-form--compact" data-loading-label="Looking up weather...">
+      <label for="city" class="sr-only">City</label>
+      <input id="city" name="city" type="text" value="{{.SearchQuery}}" placeholder="Search another city" autocomplete="off" required>
+      <button type="submit">Update</button>
+    </form>
+  </div>
+
+  {{if .HasWeather}}
+    <section class="content-card weather-summary-card" aria-label="current weather summary">
+      <div class="weather-summary">
+        <div>
+          <p class="eyebrow">Current conditions</p>
+          <h3>{{.Weather.City}}</h3>
+          <p class="weather-condition">{{.Weather.Condition}}</p>
+        </div>
+        <div class="weather-temp">{{.Weather.TemperatureC}}°C</div>
+      </div>
+
+      <div class="weather-stats">
+        <div class="stat">
+          <span>Feels like</span>
+          <strong>{{.Weather.FeelsLikeC}}°C</strong>
+        </div>
+        <div class="stat">
+          <span>Humidity</span>
+          <strong>{{.Weather.HumidityPct}}%</strong>
+        </div>
+        <div class="stat">
+          <span>Wind</span>
+          <strong>{{.Weather.WindKph}} km/h</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-card forecast-card" aria-label="forecast">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Forecast</p>
+          <h3>Next 3 days</h3>
+        </div>
+      </div>
+
+      <div class="forecast-grid">
+        {{range .Forecast}}
+        <article class="forecast-item">
+          <time class="forecast-day" datetime="{{.Day}}" data-date="{{.Day}}">{{.Day}}</time>
+          <strong class="forecast-condition">{{.Condition}}</strong>
+          <p class="forecast-range">{{.HighC}}° / {{.LowC}}°</p>
+        </article>
+        {{end}}
+      </div>
+    </section>
   {{else}}
-    <p>{{if .ErrorMessage}}{{.ErrorMessage}}{{else}}Enter a city to see weather details.{{end}}</p>
+    <section class="content-card empty-state" aria-label="weather unavailable">
+      <p class="eyebrow">No results yet</p>
+      <h3>{{if .ErrorMessage}}{{.ErrorMessage}}{{else}}Enter a city to see weather details.{{end}}</h3>
+      <p>Try a known city like London or Edinburgh, then refine the search from the results page.</p>
+    </section>
   {{end}}
 </section>
 {{end}}

@@ -1,0 +1,19 @@
+{
+  "name": "weather-app-ui-tests",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "ui:bdd": "cucumber-js",
+    "ui:mocha": "mocha \"test/ui/**/*.spec.js\" --timeout 10000",
+    "ui:test": "npm run ui:bdd && npm run ui:mocha",
+    "ui:test:headed": "set HEADLESS=false&& set SLOWMO_MS=200&& npm run ui:test",
+    "ui:bdd:headed": "set HEADLESS=false&& set SLOWMO_MS=200&& npm run ui:bdd",
+    "ui:mocha:headed": "set HEADLESS=false&& set SLOWMO_MS=200&& npm run ui:mocha"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "chai": "^4.5.0",
+    "mocha": "^10.7.0",
+    "playwright": "^1.55.0"
+  }
+}

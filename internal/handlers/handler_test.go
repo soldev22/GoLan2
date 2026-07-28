@@ -3,6 +3,8 @@ package handlers
 import (
 	"bytes"
 	"html/template"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -28,8 +30,8 @@ func TestTemplatesParseAndRender(t *testing.T) {
 		Message:         "Weather App starter is running.",
 		ContentTemplate: "index_content",
 		NavItems: []models.NavItem{{
-			Label: "Home",
-			Path:  "/",
+			Label:  "Home",
+			Path:   "/",
 			Active: true,
 		}},
 		Year: 2026,
@@ -42,5 +44,19 @@ func TestTemplatesParseAndRender(t *testing.T) {
 	output := buf.String()
 	if !strings.Contains(output, "Weather App") {
 		t.Fatalf("rendered output missing expected content: %s", output)
+	}
+}
+
+func TestHealthEndpoint(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+
+	Health(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if got := strings.TrimSpace(rec.Body.String()); got != "ok" {
+		t.Fatalf("expected body ok, got %q", got)
 	}
 }

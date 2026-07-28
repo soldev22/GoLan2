@@ -46,8 +46,13 @@ Then open: `http://localhost:8080`
 ## Routes
 
 - `GET /`
+- `GET /healthz`
 - `GET /weather`
 - `GET /forecast`
 - `GET /about`
 
-Note: external weather API integration is intentionally not implemented yet.
+Current weather and 3-day forecasts are fetched live from the [Open-Meteo](https://open-meteo.com/) API (geocoding + forecast). Configure the following environment variables to override defaults:
+
+- `WEATHER_APP_OPENMETEO_FORECAST_URL`
+- `WEATHER_APP_OPENMETEO_GEOCODING_URL`
+- `WEATHER_APP_WEATHER_REQUEST_TIMEOUT_SEC`

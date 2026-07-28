@@ -15,6 +15,7 @@ import (
 	"weather-app/internal/handlers"
 	"weather-app/internal/middleware"
 	"weather-app/internal/services"
+	"weather-app/internal/weather"
 )
 
 func main() {
@@ -32,7 +33,12 @@ func main() {
 		logger.Fatalf("parse templates: %v", err)
 	}
 
-	pageService := services.NewPageService(nil)
+	provider := weather.NewClient(weather.Config{
+		ForecastURL:    cfg.WeatherForecastURL,
+		GeocodingURL:   cfg.WeatherGeocodingURL,
+		RequestTimeout: cfg.WeatherRequestTimeout,
+	})
+	pageService := services.NewPageService(provider)
 	h := handlers.New(pageService, tmpl, logger)
 
 	mux := http.NewServeMux()

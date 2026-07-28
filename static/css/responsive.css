@@ -1,0 +1,26 @@
+@media (max-width: 768px) {
+  .nav-toggle {
+    display: inline-block;
+  }
+
+  .nav-list {
+    background: #ffffff;
+    border: 1px solid #d8e2ec;
+    border-radius: 0.5rem;
+    display: none;
+    min-width: 12rem;
+    padding: 0.5rem;
+    position: absolute;
+    right: 1rem;
+    top: 4.1rem;
+  }
+
+  .site-nav.is-open .nav-list {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .hero h1 {
+    font-size: 1.7rem;
+  }
+}

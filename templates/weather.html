@@ -1,0 +1,20 @@
+{{define "weather_content"}}
+<section class="content-card" aria-label="weather content">
+  <h2>{{.Title}}</h2>
+  {{if .HasWeather}}
+    <div class="weather-summary">
+      <h3>{{.Weather.City}}</h3>
+      <p>{{.Weather.TemperatureC}}°C · {{.Weather.Condition}}</p>
+      <p>Feels like {{.Weather.FeelsLikeC}}°C · Humidity {{.Weather.HumidityPct}}% · Wind {{.Weather.WindKph}} km/h</p>
+    </div>
+    <h3>Forecast</h3>
+    <ul>
+      {{range .Forecast}}
+      <li><strong>{{.Day}}</strong>: {{.HighC}}°C / {{.LowC}}°C · {{.Condition}}</li>
+      {{end}}
+    </ul>
+  {{else}}
+    <p>{{if .ErrorMessage}}{{.ErrorMessage}}{{else}}Enter a city to see weather details.{{end}}</p>
+  {{end}}
+</section>
+{{end}}

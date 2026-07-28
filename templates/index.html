@@ -1,0 +1,11 @@
+{{define "index_content"}}
+<section class="content-card" aria-label="home content">
+  <h2>Search weather</h2>
+  <p>Enter a city to look up live weather details and a short forecast.</p>
+  <form action="/weather" method="get" class="search-form">
+    <label for="city" class="sr-only">City</label>
+    <input id="city" name="city" type="text" placeholder="Try London" required>
+    <button type="submit">Search</button>
+  </form>
+</section>
+{{end}}

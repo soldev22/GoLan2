@@ -1,0 +1,22 @@
+# Binaries
+/bin/
+/dist/
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Logs
+*.log
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env

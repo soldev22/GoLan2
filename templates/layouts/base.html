@@ -1,0 +1,45 @@
+{{define "base"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} | Weather App</title>
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-shell">
+      <a class="brand" href="/" aria-label="Weather App home">weather-app</a>
+      {{template "nav" .}}
+    </div>
+  </header>
+
+  <main class="container site-main">
+    <section class="hero" aria-labelledby="page-heading">
+      <h1 id="page-heading">{{.Heading}}</h1>
+      <p>{{.Message}}</p>
+    </section>
+    {{if eq .ContentTemplate "index_content"}}
+      {{template "index_content" .}}
+    {{else if eq .ContentTemplate "weather_content"}}
+      {{template "weather_content" .}}
+    {{else if eq .ContentTemplate "error_content"}}
+      {{template "error_content" .}}
+    {{end}}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>&copy; {{.Year}} weather-app</small>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js" defer></script>
+  <script src="/static/js/weather.js" defer></script>
+  <script src="/static/js/search.js" defer></script>
+</body>
+</html>
+{{end}}

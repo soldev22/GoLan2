@@ -1,0 +1,14 @@
+{{define "nav"}}
+<nav class="site-nav" aria-label="Primary navigation">
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">
+    Menu
+  </button>
+  <ul id="primary-menu" class="nav-list">
+    {{range .NavItems}}
+    <li>
+      <a class="nav-link{{if .Active}} is-active{{end}}" href="{{.Path}}">{{.Label}}</a>
+    </li>
+    {{end}}
+  </ul>
+</nav>
+{{end}}

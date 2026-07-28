@@ -34,6 +34,7 @@ func (s *pageService) Home() models.PageData {
 		Heading:         "Welcome",
 		Message:         "Search for a city to view live weather.",
 		ContentTemplate: "index_content",
+		SearchQuery:     "",
 		NavItems:        navItems("/"),
 		Year:            time.Now().Year(),
 	}
@@ -70,16 +71,16 @@ func (s *pageService) Error() models.PageData {
 }
 
 func (s *pageService) renderWeatherPage(title, heading, message, city, activePath string) models.PageData {
+	trimmedCity := strings.TrimSpace(city)
 	page := models.PageData{
 		Title:           title,
 		Heading:         heading,
 		Message:         message,
 		ContentTemplate: "weather_content",
+		SearchQuery:     trimmedCity,
 		NavItems:        navItems(activePath),
 		Year:            time.Now().Year(),
 	}
-
-	trimmedCity := strings.TrimSpace(city)
 	if trimmedCity == "" {
 		page.ErrorMessage = "Enter a city name to get weather details."
 		page.HasWeather = false

@@ -3,11 +3,13 @@ package weather
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"weather-app/internal/models"
 )
@@ -18,17 +20,57 @@ type Provider interface {
 	Forecast(context.Context, string) ([]models.ForecastItem, error)
 }
 
-// Client wraps a simple HTTP weather provider using Open-Meteo.
-type Client struct {
-	BaseURL string
+var ErrInvalidCity = errors.New("city name is required")
+
+const (
+	defaultForecastURL  = "https://api.open-meteo.com/v1/forecast"
+	defaultGeocodingURL = "https://geocoding-api.open-meteo.com/v1/search"
+	defaultTimeout      = 5 * time.Second
+)
+
+// Config controls the endpoints and timeout used by the weather client.
+type Config struct {
+	ForecastURL    string
+	GeocodingURL   string
+	RequestTimeout time.Duration
 }
 
-func NewClient() *Client {
-	return &Client{BaseURL: "https://api.open-meteo.com/v1/forecast"}
+// Client wraps a simple HTTP weather provider using Open-Meteo.
+type Client struct {
+	forecastURL  string
+	geocodingURL string
+	httpClient   *http.Client
+}
+
+func NewClient(cfg ...Config) *Client {
+	clientConfig := Config{}
+	if len(cfg) > 0 {
+		clientConfig = cfg[0]
+	}
+	if clientConfig.ForecastURL == "" {
+		clientConfig.ForecastURL = defaultForecastURL
+	}
+	if clientConfig.GeocodingURL == "" {
+		clientConfig.GeocodingURL = defaultGeocodingURL
+	}
+	if clientConfig.RequestTimeout <= 0 {
+		clientConfig.RequestTimeout = defaultTimeout
+	}
+
+	return &Client{
+		forecastURL:  clientConfig.ForecastURL,
+		geocodingURL: clientConfig.GeocodingURL,
+		httpClient:   &http.Client{Timeout: clientConfig.RequestTimeout},
+	}
 }
 
 func (c *Client) Current(ctx context.Context, city string) (models.Weather, error) {
-	coords, err := c.lookupCoordinates(ctx, city)
+	cleanCity, err := normalizeCity(city)
+	if err != nil {
+		return models.Weather{}, err
+	}
+
+	coords, err := c.lookupCoordinates(ctx, cleanCity)
 	if err != nil {
 		return models.Weather{}, err
 	}
@@ -39,13 +81,13 @@ func (c *Client) Current(ctx context.Context, city string) (models.Weather, erro
 	params.Set("current", "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m")
 	params.Set("timezone", "auto")
 
-	endpoint := fmt.Sprintf("%s?%s", c.BaseURL, params.Encode())
+	endpoint := fmt.Sprintf("%s?%s", c.forecastURL, params.Encode())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return models.Weather{}, fmt.Errorf("build current weather request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return models.Weather{}, fmt.Errorf("request current weather: %w", err)
 	}
@@ -61,7 +103,7 @@ func (c *Client) Current(ctx context.Context, city string) (models.Weather, erro
 	}
 
 	return models.Weather{
-		City:         strings.Title(city),
+		City:         titleizeCity(city),
 		TemperatureC: int(payload.Current.Temperature2M),
 		Condition:    weatherCodeToCondition(payload.Current.WeatherCode),
 		FeelsLikeC:   int(payload.Current.ApparentTemperature),
@@ -72,7 +114,12 @@ func (c *Client) Current(ctx context.Context, city string) (models.Weather, erro
 }
 
 func (c *Client) Forecast(ctx context.Context, city string) ([]models.ForecastItem, error) {
-	coords, err := c.lookupCoordinates(ctx, city)
+	cleanCity, err := normalizeCity(city)
+	if err != nil {
+		return nil, err
+	}
+
+	coords, err := c.lookupCoordinates(ctx, cleanCity)
 	if err != nil {
 		return nil, err
 	}
@@ -84,13 +131,13 @@ func (c *Client) Forecast(ctx context.Context, city string) ([]models.ForecastIt
 	params.Set("forecast_days", "3")
 	params.Set("timezone", "auto")
 
-	endpoint := fmt.Sprintf("%s?%s", c.BaseURL, params.Encode())
+	endpoint := fmt.Sprintf("%s?%s", c.forecastURL, params.Encode())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("build forecast request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request forecast: %w", err)
 	}
@@ -107,8 +154,10 @@ func (c *Client) Forecast(ctx context.Context, city string) ([]models.ForecastIt
 
 	items := make([]models.ForecastItem, 0, len(payload.Daily.Time))
 	for i := range payload.Daily.Time {
+		rawDate := payload.Daily.Time[i]
 		items = append(items, models.ForecastItem{
-			Day:       payload.Daily.Time[i],
+			Day:       rawDate,
+			DayLabel:  formatForecastDay(rawDate),
 			HighC:     int(payload.Daily.MaxTemp[i]),
 			LowC:      int(payload.Daily.MinTemp[i]),
 			Condition: weatherCodeToCondition(payload.Daily.WeatherCode[i]),
@@ -148,7 +197,7 @@ func (c *Client) lookupCoordinates(ctx context.Context, city string) (struct {
 	Latitude  float64
 	Longitude float64
 }, error) {
-	endpoint := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json", url.QueryEscape(city))
+	endpoint := fmt.Sprintf("%s?name=%s&count=1&language=en&format=json", c.geocodingURL, url.QueryEscape(city))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return struct {
@@ -157,7 +206,7 @@ func (c *Client) lookupCoordinates(ctx context.Context, city string) (struct {
 		}{}, fmt.Errorf("build geocoding request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return struct {
 			Latitude  float64
@@ -196,6 +245,14 @@ func (c *Client) lookupCoordinates(ctx context.Context, city string) (struct {
 	}, nil
 }
 
+func (c *Client) do(req *http.Request) (*http.Response, error) {
+	client := c.httpClient
+	if client == nil {
+		client = &http.Client{Timeout: defaultTimeout}
+	}
+	return client.Do(req)
+}
+
 func weatherCodeToCondition(code int) string {
 	switch code {
 	case 0:
@@ -215,4 +272,31 @@ func weatherCodeToCondition(code int) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func titleizeCity(city string) string {
+	parts := strings.Fields(strings.TrimSpace(city))
+	for i, part := range parts {
+		if len(part) == 0 {
+			continue
+		}
+		parts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+	}
+	return strings.Join(parts, " ")
+}
+
+func normalizeCity(city string) (string, error) {
+	cleanCity := strings.TrimSpace(city)
+	if cleanCity == "" {
+		return "", ErrInvalidCity
+	}
+	return cleanCity, nil
+}
+
+func formatForecastDay(day string) string {
+	parsed, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return day
+	}
+	return parsed.Format("Mon, Jan 2")
 }

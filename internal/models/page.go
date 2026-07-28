@@ -13,6 +13,7 @@ type PageData struct {
 	Heading         string
 	Message         string
 	ContentTemplate string
+	SearchQuery     string
 	NavItems        []NavItem
 	Year            int
 	Weather         Weather
